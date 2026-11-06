@@ -1,172 +1,265 @@
+
 @import "tailwindcss";
-
-
 
 @layer base {
   * {
     @apply box-border m-0 p-0;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     font-family: "DM Sans", sans-serif;
-    @apply   bg-[#07122f]   text-white antialiased;
+    background: #0B1120;
+    color: #FFFFFF;
+    @apply antialiased;
   }
+
   h1,
   h2,
   h3 {
     font-family: "Syne", sans-serif;
+    color: #FFFFFF;
   }
-  html {
-    scroll-behavior: smooth;
+
+  a {
+    color: #FB923C;
+    @apply transition-colors duration-200;
+  }
+
+  ::selection {
+    background: #F97316;
+    color: #FFFFFF;
   }
 }
 
 @layer components {
- .bg-page {
-  @apply min-h-screen relative overflow-hidden;
-  background: #07122f;
-}
+  /* Main dark background */
+  .bg-page {
+    @apply min-h-screen relative overflow-hidden;
+    background: #0B1120;
+    color: #FFFFFF;
+  }
 
-.bg-page::after {
-  content: "";
-  position: absolute;
-  inset: 0;
+  .bg-page::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+      rgba(255, 255, 255, 0.12) 1px,
+      transparent 1px
+    );
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none;
+  }
 
-  background-image: radial-gradient(
-    rgba(246, 244, 244, 0.05) 1px,
-    transparent 1px
-  );
-
-  background-size: 90px 90px;
-  opacity: 0.15;
-  pointer-events: none;
-}
-
-  /* ── Glass card ── */
+  /* Dark premium cards */
   .glass-card {
-    @apply bg-white/4 border border-white/8 rounded-2xl backdrop-blur-xl;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-      0 32px 64px rgba(0, 0, 0, 0.4);
+    background: rgba(21, 31, 50, 0.92);
+    border: 1px solid #29364D;
+    @apply rounded-2xl backdrop-blur-xl;
+
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+      0 16px 40px rgba(0, 0, 0, 0.25);
   }
 
-  /* ── Primary CTA button ── */
-.btn-primary {
-  @apply text-white font-semibold cursor-pointer rounded-xl px-5 py-2.5
-         transition-all duration-300 relative overflow-hidden;
+  /* Orange primary button */
+  .btn-primary {
+    @apply text-white font-semibold cursor-pointer
+      rounded-xl px-5 py-2.5 transition-all duration-300
+      relative overflow-hidden;
 
-  background: linear-gradient(
-    135deg,
-    #dd5b14,
-    #cb5222
-  );
+    background: linear-gradient(
+      135deg,
+      #F97316,
+      #EA580C
+    );
 
-  box-shadow:
-    0 10px 30px rgba(21, 73, 140, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
+    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.22);
+  }
 
-/* hover = premium lift */
-.btn-primary:hover {
-  transform: translateY(-2px) scale(1.01);
+  .btn-primary:hover {
+    transform: translateY(-2px);
 
-  background: linear-gradient(
-    135deg,
-    #fb761d,
-    #f6aa5e
-  );
+    background: linear-gradient(
+      135deg,
+      #FB923C,
+      #F97316
+    );
 
-  box-shadow:
-    0 18px 45px rgba(21, 73, 140, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
+    box-shadow: 0 12px 30px rgba(249, 115, 22, 0.32);
+  }
 
-/* subtle shine effect */
-.btn-primary::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    120deg,
-    transparent 30%,
-    rgba(255,255,255,0.25),
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 0.3s;
-}
+  .btn-primary:active {
+    transform: translateY(0);
+  }
 
-.btn-primary:hover::before {
-  opacity: 1;
-}
-  /* ── Google login button ── */
+  .btn-primary:focus-visible,
+  .btn-google:focus-visible {
+    outline: 3px solid #FDBA74;
+    outline-offset: 3px;
+  }
+
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      120deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.22),
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .btn-primary:hover::before {
+    opacity: 1;
+  }
+
+  /* Google login button */
   .btn-google {
-    @apply flex items-center justify-center gap-3 w-full px-6 py-3.5
-           bg-white/6 hover:bg-white/10 active:bg-white/4
-           border border-white/12 hover:border-white/22
-           rounded-xl text-white font-medium text-[15px] tracking-wide
-           transition-all duration-200 cursor-pointer select-none;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    @apply flex items-center justify-center gap-3 w-full
+      px-6 py-3.5 rounded-xl font-medium text-[15px]
+      tracking-wide transition-all duration-200
+      cursor-pointer select-none;
+
+    background: #FFFFFF;
+    color: #111827;
+    border: 1px solid #D1D5DB;
   }
 
-  /* ── Gradient text ── */
-   
- .text-gradient {
-  @apply bg-clip-text text-transparent;
+  .btn-google:hover {
+    background: #F3F4F6;
+  }
 
-  background-image: linear-gradient(
-    135deg,
-    #d4532b 0%,   /* soft blue highlight */
-    #e4763a 40%,  /* warm luxury */
-    #c95f27 60%,  /* soft glow */
-    rgb(245, 131, 74) 100%  /* subtle depth */
-  );
-}
+  /* Orange gradient headings */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
 
-  /* ── Divider ── */
+    background-image: linear-gradient(
+      135deg,
+      #FDBA74 0%,
+      #F97316 55%,
+      #EA580C 100%
+    );
+  }
+
+  /* Divider */
   .divider-subtle {
-    @apply border-t border-white/6 w-full;
+    @apply border-t w-full;
+    border-color: #29364D;
   }
 
-  /* ── Background orb blobs ── */
+  /* Background glow */
   .orb {
-    @apply absolute rounded-full pointer-events-none blur-3xl opacity-20;
+    @apply absolute rounded-full pointer-events-none blur-3xl;
+    opacity: 0.20;
+    background: #F97316;
   }
 
-  /* ── Small badge pills ── */
+  /* Feature pills */
   .feature-pill {
-    @apply flex items-center gap-1.5 text-xs text-white/40 bg-white/4
-           border border-white/[0.07] rounded-full px-3 py-1;
+    @apply inline-flex items-center gap-1.5
+      text-xs rounded-full px-3 py-1;
+
+    color: #E2E8F0;
+    background: #1E293B;
+    border: 1px solid #334155;
   }
 
-  /* ── Form input ── */
+  /* Input fields */
   .input-field {
-    @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5
-           text-sm text-white placeholder:text-white/25 outline-none
-           focus:border-indigo-500/50 transition-colors;
+    @apply w-full rounded-xl px-4 py-2.5 text-sm
+      outline-none transition-all duration-200;
+
+    background: #151F32;
+    color: #FFFFFF;
+    border: 1px solid #334155;
+  }
+
+  .input-field::placeholder {
+    color: #94A3B8;
+  }
+
+  .input-field:focus {
+    border-color: #F97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+  }
+
+  .input-field:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* Job status badges */
+  .badge-success {
+    @apply inline-flex items-center rounded-full
+      px-3 py-1 text-xs font-medium;
+
+    color: #6EE7B7;
+    background: #064E3B;
+    border: 1px solid #065F46;
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center rounded-full
+      px-3 py-1 text-xs font-medium;
+
+    color: #FCD34D;
+    background: #78350F;
+    border: 1px solid #92400E;
   }
 }
 
-/* ── Animations ── */
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
+
 @keyframes slideUp {
   from {
     opacity: 0;
     transform: translateY(24px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 .animate-fade-in {
   animation: fadeIn 0.6s ease both;
 }
+
 .animate-slide-up {
   animation: slideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-fade-in,
+  .animate-slide-up {
+    animation: none;
+  }
+
+  .btn-primary {
+    transition: none;
+  }
 }
