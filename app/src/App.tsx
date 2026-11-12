@@ -13,6 +13,7 @@ import JobMatcher from "./pages/JobMatcher";
 import FAQ from "./pages/FAQ";
 import InterviewPrep from "./pages/Interview";
 import BuildResumePage from "./pages/BuildResume";
+import Jobs from "./pages/Jobs";
 import PaymentSuccess from "./pages/paymentSucess";
 
 const App = () => {
@@ -37,6 +38,7 @@ const App = () => {
      <Route path="/interviewprep" element={<InterviewPrep />} />
      <Route path="/resumebuilder" element={<BuildResumePage />} />
      <Route path="/faq" element={<FAQ />} />
+    <Route path="/jobs" element={<Jobs />} />
      <Route path="/payment/success" element={<PaymentSuccess />} />
      </Route>
    

@@ -1,8 +1,8 @@
-
 import { useRef, useState } from "react";
 import type { Job } from "../types";
 import { matchBg, matchColor, toBase64 } from "../utils";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { server } from "../main";
 import {
   AlertCircle,
@@ -14,11 +14,34 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { JobCard, BookingModal } from "./Jobs";
 
 interface Result {
   jobs: Job[];
   summary: string;
 }
+
+const authHeaders = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+});
+
+// maps an AI role title to a category in the job portal
+const getCategory = (title: string): string | null => {
+  const t = title.split("(")[0].toLowerCase();
+  if (t.includes("full stack") || t.includes("full-stack") || t.includes("fullstack"))
+    return "Full Stack";
+  if (t.includes("ui/ux") || t.includes("ux") || t.includes("designer")) return "UI/UX";
+  if (t.includes("qa") || t.includes("test")) return "QA";
+  if (t.includes("devops") || t.includes("cloud") || t.includes("sre")) return "DevOps";
+  if (t.includes("data") || t.includes("machine learning") || t.includes("ai ") || t.includes("ml "))
+    return "Data/AI";
+  if (t.includes("backend") || t.includes("back-end") || t.includes("back end"))
+    return "Backend";
+  if (t.includes("frontend") || t.includes("front-end") || t.includes("front end") || t.includes("react"))
+    return "Frontend";
+  if (t.includes("web") || t.includes("software")) return "Full Stack";
+  return null;
+};
 
 const JobMatcherPage = () => {
   const [mode, setMode] = useState<"manual" | "resume">("manual");
@@ -30,6 +53,10 @@ const JobMatcherPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // vacancies from the job portal, grouped by category
+  const [vacancies, setVacancies] = useState<Record<string, any[]>>({});
+  const [booking, setBooking] = useState<{ job: any; companyName: string } | null>(null);
 
   function addSkill() {
     const s = skillInput.trim();
@@ -47,9 +74,49 @@ const JobMatcherPage = () => {
     setFile(f);
   }
 
+  async function loadVacancies(jobs: Job[], skillList: string[]) {
+    const cats = Array.from(
+      new Set(jobs.map((j) => getCategory(j.title)).filter(Boolean) as string[])
+    );
+
+    const entries = await Promise.all(
+      cats.map(async (cat) => {
+        try {
+          const { data } = await axios.get(`${server}/api/jobs`, {
+            ...authHeaders(),
+            params: { category: cat, skills: skillList.join(",") },
+          });
+          return [cat, data.jobs] as [string, any[]];
+        } catch {
+          return [cat, []] as [string, any[]];
+        }
+      })
+    );
+
+    setVacancies(Object.fromEntries(entries));
+  }
+
+  // match % only works when we know the skills (manual mode)
+  const matchSkills = mode === "manual" ? skills : [];
+
+  const refreshVacancies = () => {
+    if (result) loadVacancies(result.jobs, matchSkills);
+  };
+
+  async function toggleSave(id: string) {
+    try {
+      const { data } = await axios.post(`${server}/api/jobs/${id}/save`, {}, authHeaders());
+      toast.success(data.message);
+      refreshVacancies();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+    }
+  }
+
   async function handleSubmit() {
     setError("");
     setResult(null);
+    setVacancies({});
 
     if (mode === "manual" && (!skills.length || !experience.trim())) {
       return setError("Please add at least one skill and your experience.");
@@ -70,14 +137,11 @@ const JobMatcherPage = () => {
       const { data } = await axios.post(
         `${server}/api/ai/job-matcher`,
         payload,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
+        authHeaders()
       );
 
       setResult(data);
+      await loadVacancies(data.jobs, mode === "manual" ? skills : []);
     } catch (error: any) {
       setError(
         error?.response?.data?.message || "Failed to fetch job matches."
@@ -97,6 +161,7 @@ const JobMatcherPage = () => {
               onClick={() => {
                 setMode(m);
                 setResult(null);
+                setVacancies({});
                 setError("");
               }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 capitalize ${
@@ -236,61 +301,103 @@ const JobMatcherPage = () => {
               </p>
             </div>
 
-            {result.jobs.map((job, i) => (
-              <div
-                key={i}
-                className={`glass-card p-6 flex flex-col gap-4 border ${matchBg(
-                  job.matchScore
-                )}`}
-              >
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div>
-                    <h3 className="font-bold text-white">{job.title}</h3>
-                    <p className="text-white/45 text-sm mt-0.5">
-                      {job.company} • {job.location} • {job.type}
+            {result.jobs.map((job, i) => {
+              const category = getCategory(job.title);
+              const roleVacancies = category ? vacancies[category] || [] : [];
+
+              return (
+                <div
+                  key={i}
+                  className={`glass-card p-6 flex flex-col gap-4 border ${matchBg(
+                    job.matchScore
+                  )}`}
+                >
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div>
+                      <h3 className="font-bold text-white">{job.title}</h3>
+                      <p className="text-white/45 text-sm mt-0.5">
+                        {job.company} • {job.location} • {job.type}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`text-2xl font-black shrink-0 ${matchColor(
+                        job.matchScore
+                      )}`}
+                    >
+                      {job.matchScore}%
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {job.skills.map((s) => (
+                      <span key={s} className="feature-pill">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="divider-subtle" />
+
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs text-white/30 uppercase tracking-widest">
+                      Why you match
+                    </p>
+                    <p className="text-sm text-white/55 leading-relaxed">
+                      {job.whyMatch}
                     </p>
                   </div>
 
-                  <span
-                    className={`text-2xl font-black shrink-0 ${matchColor(
-                      job.matchScore
-                    )}`}
-                  >
-                    {job.matchScore}%
-                  </span>
-                </div>
+                  <div className="flex items-start gap-2 text-sm text-white/60 bg-white/4 rounded-xl p-3">
+                    <ChevronRight
+                      size={14}
+                      className="text-indigo-400 shrink-0 mt-0.5"
+                    />
+                    {job.applyTip}
+                  </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {job.skills.map((s) => (
-                    <span key={s} className="feature-pill">
-                      {s}
-                    </span>
-                  ))}
+                  {/* vacancies from the job portal */}
+                  {category && (
+                    <>
+                      <div className="divider-subtle" />
+                      <div className="flex flex-col gap-3">
+                        <p className="text-xs text-white/30 uppercase tracking-widest">
+                          Vacancies for this role ({category})
+                        </p>
+                        {roleVacancies.length === 0 ? (
+                          <p className="text-sm text-white/35">
+                            No vacancies listed for this role right now.
+                          </p>
+                        ) : (
+                          roleVacancies.slice(0, 4).map((v) => (
+                            <JobCard
+                              key={v._id}
+                              job={v}
+                              onSave={toggleSave}
+                              onBook={(j, companyName) =>
+                                setBooking({ job: j, companyName })
+                              }
+                            />
+                          ))
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                <div className="divider-subtle" />
-
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs text-white/30 uppercase tracking-widest">
-                    Why you match
-                  </p>
-                  <p className="text-sm text-white/55 leading-relaxed">
-                    {job.whyMatch}
-                  </p>
-                </div>
-
-                <div className="flex items-start gap-2 text-sm text-white/60 bg-white/4 rounded-xl p-3">
-                  <ChevronRight
-                    size={14}
-                    className="text-indigo-400 shrink-0 mt-0.5"
-                  />
-                  {job.applyTip}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      {booking && (
+        <BookingModal
+          job={booking.job}
+          companyName={booking.companyName}
+          onClose={() => setBooking(null)}
+          onBooked={refreshVacancies}
+        />
+      )}
     </div>
   );
 };
